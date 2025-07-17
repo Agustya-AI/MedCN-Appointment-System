@@ -1,6 +1,8 @@
 from typing import List, Optional
 from fastapi import HTTPException, status
 from api.config import configureDjangoSettings
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 # Ensure Django is configured before importing Django models
 configureDjangoSettings()
@@ -71,4 +73,53 @@ def create_booking(data: BookingCreate) -> Booking:
         slot.is_booked = True
         slot.save(update_fields=["is_booked"])
 
+    send_confirmation_email_tool(data.name, data.email, doctor.name, slot.date, data.consultation_type)
+
     return booking
+configuration = sib_api_v3_sdk.Configuration()
+configuration.api_key['api-key'] = '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'
+
+api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+
+def send_confirmation_email_tool(name, email, doctor_name, appointment_time, consultation_type):
+    try:
+        smptEmail = sib_api_v3_sdk.SendSmtpEmail()
+        smptEmail.html_content = f"""
+
+    <html>
+    <body style="font-family: Arial, sans-serif;">
+        <p>Dear {name},</p>
+        <p>Your appointment has been successfully scheduled!</p>
+        <p><strong>Appointment Details:</strong></p>
+        <ul>
+            <li>Doctor: Dr. {doctor_name}</li>
+            <li>Date & Time: {appointment_time}</li>
+            <li>Consultation Type: {consultation_type}</li>
+        </ul>
+        <p>Please arrive 10 minutes before your scheduled appointment time. If you need to cancel or reschedule, please contact us at least 24 hours in advance.</p>
+        <p>Please feel free to contact us if you have any questions or need further assistance.</p>
+        <br>
+        <p>Best regards,</p>
+        <p><strong>MedCN</strong></p>
+        <br>
+    </body>
+    </html>
+        
+        """
+        
+        smptEmail.sender = {
+            "name": "MedCN",
+            "email": "no-reply@medcn.in",
+        }
+        
+        smptEmail.to = [
+        { "name": name,
+            "email": email
+        }
+        ]
+        smptEmail.subject = "Appointment Confirmation"
+        smptEmail.headers = { "Some-Custom-Name": "unique-id-1234" }
+
+        api_instance.send_transac_email(smptEmail)
+    except ApiException as e:
+        print("Exception when calling AccountApi->get_account: %s\n" % e)
