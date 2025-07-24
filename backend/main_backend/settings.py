@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     'example_app.apps.ExampleAppConfig',
+    'practiceapp.apps.PracticeappConfig',
     'platformuser.apps.PlatformuserConfig',
     'django.contrib.admin',
     'django.contrib.auth',
