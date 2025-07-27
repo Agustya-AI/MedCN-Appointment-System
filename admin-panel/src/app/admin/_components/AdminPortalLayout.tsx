@@ -20,7 +20,7 @@ export default function AdminPortalLayout({
       <nav className="w-64 bg-white border-r shadow-sm p-6">
         <div className="flex items-center gap-2 mb-8">
           <div className="h-8 w-8 rounded-lg bg-blue-600"></div>
-          <span className="text-xl font-semibold text-gray-900">Admin Portal</span>
+          <span className="text-xl font-semibold text-gray-900">MedCN</span>
         </div>
         <ul className="space-y-1.5">
           {adminRoutes.map((route) => {
