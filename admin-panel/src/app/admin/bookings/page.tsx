@@ -56,8 +56,8 @@ export default function BookingsPage() {
                   <TableCell>{booking.appointmentDate}</TableCell>
                   <TableCell>
                     <Badge variant={
-                      booking.appointmentStatus === "booked" ? "default" :
-                      booking.appointmentStatus === "completed" ? "success" : "destructive"
+                      booking.appointmentStatus === "booked" ? "default" as any :
+                      booking.appointmentStatus === "completed" ? "success" : "destructive" as any
                     }>
                       {booking.appointmentStatus}
                     </Badge>
