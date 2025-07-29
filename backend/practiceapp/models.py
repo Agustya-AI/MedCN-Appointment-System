@@ -4,6 +4,22 @@ import uuid
 # Create your models here.  
 # Practice Registry Model
 
+
+
+class PractionerUser(models.Model):
+    name = models.CharField(max_length=255)
+    email = models.EmailField(max_length=255)
+    password = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=True)
+    token = models.CharField(max_length=255, null=True, blank=True)
+    
+    
+    def __str__(self) -> str:
+        return self.name + " " + self.email
+
+
 class PracticeRegistry(models.Model):
     practice_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     practice_name = models.CharField(max_length=255)
