@@ -1,12 +1,9 @@
 from django.db import models
 import uuid
-
-# Create your models here.  
-# Practice Registry Model
-
-
+ 
 
 class PractionerUser(models.Model):
+    practioner_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=255)
     email = models.EmailField(max_length=255)
     password = models.CharField(max_length=255)
@@ -21,6 +18,7 @@ class PractionerUser(models.Model):
 
 
 class PracticeRegistry(models.Model):
+    practice_associated_with = models.CharField(max_length=500)
     practice_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     practice_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=255, null=True, blank=True)

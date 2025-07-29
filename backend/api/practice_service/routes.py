@@ -5,7 +5,7 @@ from typing import List
 from fastapi import APIRouter, status, HTTPException
 from starlette.concurrency import run_in_threadpool
 from practiceapp.models import PractionerUser
-from .utils import register_user, login_user
+from .utils import register_user, login_user, get_practice_details
 
 router = APIRouter(
     tags=["Practics"],
@@ -42,6 +42,10 @@ async def practice_login(request: LoginRequest):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/details")
-async def practice_details():
-    pass
+@router.get("/current-practice-details")
+async def practice_details(user_token: str):
+    try:
+        practice_user = await run_in_threadpool(get_practice_details, user_token)
+        return practice_user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current practice not found")
