@@ -18,7 +18,9 @@ class PractionerUser(models.Model):
 
 
 class PracticeRegistry(models.Model):
-    practice_associated_with = models.CharField(max_length=500)
+    # Link to the master user who owns this practice
+    practice_owner = models.ForeignKey(PractionerUser, on_delete=models.CASCADE, null=True, blank=True)
+    practice_associated_with = models.CharField(max_length=500)  # Keep for backward compatibility
     practice_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     practice_name = models.CharField(max_length=255)
     phone_number = models.CharField(max_length=255, null=True, blank=True)
@@ -32,15 +34,36 @@ class PracticeRegistry(models.Model):
     
     practice_location = models.JSONField(null=True, blank=True)
 
+    def __str__(self):
+        return self.practice_name
 
-class PractionerRegistry(models.Model):
-    practice_belong_to = models.ForeignKey(PracticeRegistry, on_delete=models.CASCADE)
-    practioner_name = models.CharField(max_length=255)
-    practioner_email = models.EmailField(max_length=255)
-    practioner_phone = models.CharField(max_length=255)
-    practioner_address = models.CharField(max_length=255)
-    practioner_city = models.CharField(max_length=255)
-    practioner_state = models.CharField(max_length=255)
-    practioner_zip = models.CharField(max_length=255)
+class Appointment(models.Model):
+    appointment_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    is_enabled = models.BooleanField(default=True)
+    type_of_consultation = models.CharField(max_length=255)
+    patient_type = models.CharField(max_length=255)
+    patient_duration = models.CharField(max_length=255)
     
+    def __str__(self):
+        return f"{self.type_of_consultation} - {self.patient_type}"
+    
+    
+class PractionerRegistry(models.Model):
+    practitioner_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    practice_belong_to = models.ForeignKey(PracticeRegistry, on_delete=models.CASCADE)
+    display_name = models.CharField(max_length=255)
+    link_to_best_practice = models.CharField(max_length=255, null=True, blank=True)
+    gender = models.CharField(max_length=50, null=True, blank=True)
+    profession = models.CharField(max_length=255)
+    qualifications = models.CharField(max_length=255)
+    education = models.CharField(max_length=255)
+    languages_spoken = models.CharField(max_length=255)
+    professional_statement = models.TextField(null=True, blank=True)
+    professional_areas_of_interest = models.JSONField(null=True, blank=True)
+    appointments = models.ManyToManyField(Appointment, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.display_name
+
     
