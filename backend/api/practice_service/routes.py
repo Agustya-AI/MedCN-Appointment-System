@@ -7,7 +7,9 @@ from practiceapp.models import PractionerUser
 from .utils import (
     register_user, login_user, get_practice_details, edit_practice_details,
     add_practitioner, edit_practitioner, delete_practitioner, get_all_practitioners,
-    edit_practitioner_appointments, get_all_appointments, create_appointment_type
+    edit_practitioner_appointments, get_all_appointments, create_appointment_type,
+    get_practitioner_availability_slots, add_availability_slot, edit_availability_slot,
+    delete_availability_slot, get_all_practitioners_with_availability
 )
 
 router = APIRouter(
@@ -59,6 +61,17 @@ class AppointmentTypeRequest(BaseModel):
     patient_type: str
     patient_duration: str
     is_enabled: Optional[bool] = True
+
+class AvailabilitySlotRequest(BaseModel):
+    day_of_week: str  # 'MONDAY', 'TUESDAY', etc.
+    start_time: str   # Format: 'HH:MM' (24-hour format)
+    end_time: str     # Format: 'HH:MM' (24-hour format)
+
+class AvailabilitySlotUpdateRequest(BaseModel):
+    day_of_week: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    is_active: Optional[bool] = None
 
 @router.post("/register")
 async def practice_register(request: RegisterRequest):
@@ -193,6 +206,97 @@ async def create_appointment_type_route(
         appointment_data = request.model_dump(exclude_unset=True)
         result = await run_in_threadpool(create_appointment_type, user_token, appointment_data)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+
+# Availability Slot Management Routes
+
+@router.get("/practitioners/{practitioner_uuid}/availability")
+async def get_practitioner_availability_route(
+    practitioner_uuid: str,
+    user_token: str = Query(..., description="User authentication token")
+):
+    """Get all availability slots for a specific practitioner"""
+    try:
+        availability_data = await run_in_threadpool(
+            get_practitioner_availability_slots, 
+            user_token, 
+            practitioner_uuid
+        )
+        return availability_data
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/practitioners/{practitioner_uuid}/availability")
+async def add_availability_slot_route(
+    practitioner_uuid: str,
+    request: AvailabilitySlotRequest,
+    user_token: str = Query(..., description="User authentication token")
+):
+    """Add a new availability slot for a practitioner"""
+    try:
+        slot_data = request.model_dump()
+        result = await run_in_threadpool(
+            add_availability_slot, 
+            user_token, 
+            practitioner_uuid, 
+            slot_data
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/availability/{availability_uuid}")
+async def edit_availability_slot_route(
+    availability_uuid: str,
+    request: AvailabilitySlotUpdateRequest,
+    user_token: str = Query(..., description="User authentication token")
+):
+    """Edit an existing availability slot"""
+    try:
+        slot_data = request.model_dump(exclude_unset=True)
+        result = await run_in_threadpool(
+            edit_availability_slot, 
+            user_token, 
+            availability_uuid, 
+            slot_data
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/availability/{availability_uuid}")
+async def delete_availability_slot_route(
+    availability_uuid: str,
+    user_token: str = Query(..., description="User authentication token")
+):
+    """Delete an availability slot (soft delete)"""
+    try:
+        result = await run_in_threadpool(
+            delete_availability_slot, 
+            user_token, 
+            availability_uuid
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/practitioners-availability")
+async def get_practitioners_with_availability_route(
+    user_token: str = Query(..., description="User authentication token")
+):
+    """Get all practitioners with their availability slots"""
+    try:
+        practitioners_data = await run_in_threadpool(
+            get_all_practitioners_with_availability, 
+            user_token
+        )
+        return {"practitioners": practitioners_data}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     

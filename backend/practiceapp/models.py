@@ -58,6 +58,7 @@ class PractionerRegistry(models.Model):
     qualifications = models.CharField(max_length=255)
     education = models.CharField(max_length=255)
     languages_spoken = models.CharField(max_length=255)
+    
     professional_statement = models.TextField(null=True, blank=True)
     professional_areas_of_interest = models.JSONField(null=True, blank=True)
     appointments = models.ManyToManyField(Appointment, blank=True)
@@ -66,4 +67,38 @@ class PractionerRegistry(models.Model):
     def __str__(self):
         return self.display_name
 
+
+class AvailabilitySlot(models.Model):
+    DAYS_OF_WEEK = [
+        ('MONDAY', 'Monday'),
+        ('TUESDAY', 'Tuesday'),
+        ('WEDNESDAY', 'Wednesday'),
+        ('THURSDAY', 'Thursday'),
+        ('FRIDAY', 'Friday'),
+        ('SATURDAY', 'Saturday'),
+        ('SUNDAY', 'Sunday'),
+    ]
+    
+    availability_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    practitioner = models.ForeignKey(PractionerRegistry, on_delete=models.CASCADE, related_name='availability_slots')
+    day_of_week = models.CharField(max_length=10, choices=DAYS_OF_WEEK)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['day_of_week', 'start_time']
+        # Ensure no overlapping slots for the same practitioner on the same day
+        unique_together = ['practitioner', 'day_of_week', 'start_time']
+    
+    def __str__(self):
+        return f"{self.practitioner.display_name} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.start_time >= self.end_time:
+            raise ValidationError('Start time must be before end time.')
+    
     

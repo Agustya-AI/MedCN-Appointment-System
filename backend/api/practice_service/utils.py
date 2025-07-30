@@ -1,6 +1,8 @@
-from practiceapp.models import PractionerUser, PractionerRegistry, PracticeRegistry, Appointment
+from practiceapp.models import PractionerUser, PractionerRegistry, PracticeRegistry, Appointment, AvailabilitySlot
 from django.core.exceptions import ObjectDoesNotExist
 from uuid import uuid4
+from datetime import time
+from django.db import models
 
 
 def register_user(name, email, password):
@@ -296,5 +298,214 @@ def create_appointment_type(user_token: str, appointment_data: dict):
             "type_of_consultation": appointment.type_of_consultation,
             "message": "Appointment type created successfully"
         }
+    except Exception as e:
+        raise Exception(str(e))
+
+
+# Availability Slot Management Functions
+
+def get_practitioner_availability_slots(user_token: str, practitioner_uuid: str):
+    """Get all availability slots for a specific practitioner"""
+    try:
+        practice = get_user_practice(user_token)
+        
+        practitioner = PractionerRegistry.objects.filter(
+            practitioner_uuid=practitioner_uuid,
+            practice_belong_to=practice
+        ).first()
+        
+        if not practitioner:
+            raise Exception("Practitioner not found")
+        
+        availability_slots = AvailabilitySlot.objects.filter(
+            practitioner=practitioner,
+            is_active=True
+        ).order_by('day_of_week', 'start_time')
+        
+        slots_list = []
+        for slot in availability_slots:
+            slots_list.append({
+                "availability_uuid": str(slot.availability_uuid),
+                "day_of_week": slot.day_of_week,
+                "day_name": slot.get_day_of_week_display(),
+                "start_time": slot.start_time.strftime('%H:%M'),
+                "end_time": slot.end_time.strftime('%H:%M'),
+                "is_active": slot.is_active,
+                "created_at": slot.created_at.isoformat(),
+                "updated_at": slot.updated_at.isoformat()
+            })
+        
+        return {
+            "practitioner_name": practitioner.display_name,
+            "practitioner_uuid": str(practitioner.practitioner_uuid),
+            "availability_slots": slots_list
+        }
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def add_availability_slot(user_token: str, practitioner_uuid: str, slot_data: dict):
+    """Add a new availability slot for a practitioner"""
+    try:
+        practice = get_user_practice(user_token)
+        
+        practitioner = PractionerRegistry.objects.filter(
+            practitioner_uuid=practitioner_uuid,
+            practice_belong_to=practice
+        ).first()
+        
+        if not practitioner:
+            raise Exception("Practitioner not found")
+        
+        # Parse time strings
+        start_time = time.fromisoformat(slot_data.get('start_time'))
+        end_time = time.fromisoformat(slot_data.get('end_time'))
+        
+        # Validate times
+        if start_time >= end_time:
+            raise Exception("Start time must be before end time")
+        
+        # Check for overlapping slots
+        overlapping_slots = AvailabilitySlot.objects.filter(
+            practitioner=practitioner,
+            day_of_week=slot_data.get('day_of_week'),
+            is_active=True
+        ).filter(
+            models.Q(start_time__lt=end_time) & models.Q(end_time__gt=start_time)
+        )
+        
+        if overlapping_slots.exists():
+            raise Exception("This time slot overlaps with an existing availability slot")
+        
+        availability_slot = AvailabilitySlot.objects.create(
+            practitioner=practitioner,
+            day_of_week=slot_data.get('day_of_week'),
+            start_time=start_time,
+            end_time=end_time
+        )
+        
+        return {
+            "availability_uuid": str(availability_slot.availability_uuid),
+            "day_of_week": availability_slot.day_of_week,
+            "day_name": availability_slot.get_day_of_week_display(),
+            "start_time": availability_slot.start_time.strftime('%H:%M'),
+            "end_time": availability_slot.end_time.strftime('%H:%M'),
+            "message": "Availability slot added successfully"
+        }
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def edit_availability_slot(user_token: str, availability_uuid: str, slot_data: dict):
+    """Edit an existing availability slot"""
+    try:
+        practice = get_user_practice(user_token)
+        
+        availability_slot = AvailabilitySlot.objects.filter(
+            availability_uuid=availability_uuid,
+            practitioner__practice_belong_to=practice
+        ).first()
+        
+        if not availability_slot:
+            raise Exception("Availability slot not found")
+        
+        # Update fields if provided
+        if 'start_time' in slot_data:
+            availability_slot.start_time = time.fromisoformat(slot_data['start_time'])
+        
+        if 'end_time' in slot_data:
+            availability_slot.end_time = time.fromisoformat(slot_data['end_time'])
+        
+        if 'day_of_week' in slot_data:
+            availability_slot.day_of_week = slot_data['day_of_week']
+        
+        if 'is_active' in slot_data:
+            availability_slot.is_active = slot_data['is_active']
+        
+        # Validate times
+        if availability_slot.start_time >= availability_slot.end_time:
+            raise Exception("Start time must be before end time")
+        
+        # Check for overlapping slots (excluding current slot)
+        overlapping_slots = AvailabilitySlot.objects.filter(
+            practitioner=availability_slot.practitioner,
+            day_of_week=availability_slot.day_of_week,
+            is_active=True
+        ).exclude(
+            availability_uuid=availability_uuid
+        ).filter(
+            models.Q(start_time__lt=availability_slot.end_time) & 
+            models.Q(end_time__gt=availability_slot.start_time)
+        )
+        
+        if overlapping_slots.exists():
+            raise Exception("This time slot overlaps with an existing availability slot")
+        
+        availability_slot.save()
+        
+        return {
+            "availability_uuid": str(availability_slot.availability_uuid),
+            "day_of_week": availability_slot.day_of_week,
+            "day_name": availability_slot.get_day_of_week_display(),
+            "start_time": availability_slot.start_time.strftime('%H:%M'),
+            "end_time": availability_slot.end_time.strftime('%H:%M'),
+            "is_active": availability_slot.is_active,
+            "message": "Availability slot updated successfully"
+        }
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def delete_availability_slot(user_token: str, availability_uuid: str):
+    """Delete an availability slot (soft delete by setting is_active to False)"""
+    try:
+        practice = get_user_practice(user_token)
+        
+        availability_slot = AvailabilitySlot.objects.filter(
+            availability_uuid=availability_uuid,
+            practitioner__practice_belong_to=practice
+        ).first()
+        
+        if not availability_slot:
+            raise Exception("Availability slot not found")
+        
+        availability_slot.is_active = False
+        availability_slot.save()
+        
+        return {"message": "Availability slot deleted successfully"}
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def get_all_practitioners_with_availability(user_token: str):
+    """Get all practitioners with their availability slots for the practice"""
+    try:
+        practice = get_user_practice(user_token)
+        
+        practitioners = PractionerRegistry.objects.filter(
+            practice_belong_to=practice,
+            is_active=True
+        ).prefetch_related('availability_slots')
+        
+        practitioners_list = []
+        for practitioner in practitioners:
+            availability_slots = []
+            for slot in practitioner.availability_slots.filter(is_active=True):
+                availability_slots.append({
+                    "availability_uuid": str(slot.availability_uuid),
+                    "day_of_week": slot.day_of_week,
+                    "day_name": slot.get_day_of_week_display(),
+                    "start_time": slot.start_time.strftime('%H:%M'),
+                    "end_time": slot.end_time.strftime('%H:%M')
+                })
+            
+            practitioners_list.append({
+                "practitioner_uuid": str(practitioner.practitioner_uuid),
+                "display_name": practitioner.display_name,
+                "profession": practitioner.profession,
+                "availability_slots": availability_slots
+            })
+        
+        return practitioners_list
     except Exception as e:
         raise Exception(str(e))

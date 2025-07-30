@@ -29,7 +29,6 @@ export default function BookingsPage() {
       appointmentStatus: "booked",
       bookedAt: "2024-01-10 10:30 AM"
     },
-    // Add more mock data as needed
   ])
 
   return (
@@ -38,7 +37,6 @@ export default function BookingsPage() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Bookings</h1>
         </div>
-
         <div className="rounded-md border">
           <Table>
             <TableHeader>
