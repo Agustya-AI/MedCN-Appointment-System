@@ -6,10 +6,13 @@ from starlette.concurrency import run_in_threadpool
 # from .utils import list_doctors, get_doctor, list_slots, create_booking
 
 router = APIRouter(
-    tags=["Booking"],
-    prefix="/booking",
+    tags=["Patient"],
+    prefix="/patient",
 )
 
+
+# @router.post("/book-slot")
+# async def book_slot(request: BookingCreate):
 
 # @router.get("/doctors", response_model=List[DoctorOut])
 # async def get_doctors():

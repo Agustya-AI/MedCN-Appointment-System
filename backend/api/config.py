@@ -1,5 +1,5 @@
 MYSQL_DATABASE_CONNECTION = "mysql+pymysql://root@localhost:3306/apnacollege_db"
-LOGGER_NAME = "ApnaCollege"
+LOGGER_NAME = "MedCN"
 from django.core.wsgi import get_wsgi_application
 from django.core.asgi import get_asgi_application
 import os
