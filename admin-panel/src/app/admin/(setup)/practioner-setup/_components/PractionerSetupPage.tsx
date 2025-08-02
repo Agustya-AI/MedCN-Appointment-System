@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { usePractitioners } from '@/app/admin/_hooks/usePracticeData'
+import { useRouter } from 'next/navigation'
 
 // Button component (inline for now)
 const Button = ({ 
@@ -69,50 +71,45 @@ const Select = ({ children, className, ...props }: React.SelectHTMLAttributes<HT
 }
 
 interface Practitioner {
-  id: string
-  name: string
-  avatar?: string
-  visible: boolean
-  specialty?: string
+  practitioner_uuid: string
+  display_name: string
+  profession?: string
+  is_active: boolean
+  qualifications?: string
+  education?: string
+  languages_spoken?: string
+  gender?: string
+  professional_statement?: string
 }
-
-const dummyPractitioners: Practitioner[] = [
-  { id: '1', name: 'Bruno Rebello', visible: true, avatar: '👨‍⚕️' },
-  { id: '2', name: 'Chris Goodall', visible: true, avatar: '👨‍⚕️' },
-  { id: '3', name: 'Flu Clinic', visible: true, avatar: '🏥' },
-  { id: '4', name: 'Dr Frank (Hong-way) Lin', visible: true, avatar: '👨‍⚕️' },
-  { id: '5', name: 'Dr Pejman Amini( Bulk Billing)', visible: true, avatar: '👨‍⚕️' },
-  { id: '6', name: 'Dr Praveen Veeramachineni', visible: true, avatar: '👨‍⚕️' },
-  { id: '7', name: 'Bruno Rebello', visible: false, avatar: '👨‍⚕️' },
-  { id: '8', name: 'Dr Cho Thet Paing', visible: false, avatar: '👨‍⚕️' },
-]
 
 type TabType = 'all' | 'visible' | 'not-visible' | 'archived'
 
 export default function PracticeSetupPage() {
+  const { practitioners, loading, error, refetchPractitioners } = usePractitioners()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabType>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [branchFilter, setBranchFilter] = useState('all')
 
   const getCounts = () => {
-    const visible = dummyPractitioners.filter(p => p.visible).length
-    const notVisible = dummyPractitioners.filter(p => !p.visible).length
+    const visible = practitioners.filter(p => p.is_active).length
+    const notVisible = practitioners.filter(p => !p.is_active).length
     return {
-      all: dummyPractitioners.length,
+      all: practitioners.length,
       visible,
       notVisible,
-      archived: 25 // dummy count
+      archived: 0 // TODO: Add archived practitioners when backend supports it
     }
   }
 
   const counts = getCounts()
 
-  const filteredPractitioners = dummyPractitioners.filter(practitioner => {
-    const matchesSearch = practitioner.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPractitioners = practitioners.filter(practitioner => {
+    const matchesSearch = practitioner.display_name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesTab = 
       activeTab === 'all' ? true :
-      activeTab === 'visible' ? practitioner.visible :
-      activeTab === 'not-visible' ? !practitioner.visible :
+      activeTab === 'visible' ? practitioner.is_active :
+      activeTab === 'not-visible' ? !practitioner.is_active :
       false // archived - no data for now
     
     return matchesSearch && matchesTab
@@ -150,6 +147,37 @@ export default function PracticeSetupPage() {
     </button>
   )
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight">Practitioners</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gray-600">Loading practitioners...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight">Practitioners</h1>
+        </div>
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <div className="text-red-600">Failed to load practitioners</div>
+          <Button onClick={refetchPractitioners}>
+            Try Again
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -160,7 +188,10 @@ export default function PracticeSetupPage() {
             <span className="mr-2">❓</span>
             Need Help?
           </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
+          <Button 
+            className="bg-emerald-600 hover:bg-emerald-700"
+            onClick={() => router.push('/admin/practioner-setup/new')}
+          >
             <span className="mr-2">+</span>
             New Practitioner
           </Button>
@@ -178,13 +209,13 @@ export default function PracticeSetupPage() {
           />
           <TabButton 
             tab="visible" 
-            label="Visible" 
+            label="Active" 
             count={counts.visible} 
             isActive={activeTab === 'visible'} 
           />
           <TabButton 
             tab="not-visible" 
-            label="Not Visible" 
+            label="Inactive" 
             count={counts.notVisible} 
             isActive={activeTab === 'not-visible'} 
           />
@@ -223,9 +254,9 @@ export default function PracticeSetupPage() {
           </span>
         </div>
 
-        <Button variant="outline" className="ml-auto">
-          <span className="mr-2">⚙️</span>
-          Sort Practitioners on Bookings Page
+        <Button variant="outline" className="ml-auto" onClick={refetchPractitioners}>
+          <span className="mr-2">🔄</span>
+          Refresh
         </Button>
       </div>
 
@@ -235,29 +266,42 @@ export default function PracticeSetupPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Practitioner</TableHead>
-              <TableHead>Visible</TableHead>
+              <TableHead>Profession</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredPractitioners.map((practitioner) => (
-              <TableRow key={practitioner.id}>
+              <TableRow key={practitioner.practitioner_uuid}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-lg">
-                      {practitioner.avatar}
+                      👨‍⚕️
                     </div>
-                    <span className="font-medium">{practitioner.name}</span>
+                    <div>
+                      <div className="font-medium">{practitioner.display_name}</div>
+                      {practitioner.qualifications && (
+                        <div className="text-sm text-muted-foreground">
+                          {practitioner.qualifications}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm">
+                    {practitioner.profession || 'Not specified'}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <div className={cn(
                       'h-2 w-2 rounded-full',
-                      practitioner.visible ? 'bg-emerald-500' : 'bg-red-500'
+                      practitioner.is_active ? 'bg-emerald-500' : 'bg-red-500'
                     )} />
                     <span className="text-sm">
-                      {practitioner.visible ? 'Yes' : 'No'}
+                      {practitioner.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                 </TableCell>
@@ -269,10 +313,13 @@ export default function PracticeSetupPage() {
               </TableRow>
             ))}
             
-            {filteredPractitioners.length === 0 && (
+            {filteredPractitioners.length === 0 && !loading && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                  No practitioners found matching your criteria.
+                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  {practitioners.length === 0 
+                    ? "No practitioners found. Click 'New Practitioner' to add one."
+                    : "No practitioners found matching your criteria."
+                  }
                 </TableCell>
               </TableRow>
             )}
