@@ -306,7 +306,11 @@ export default function PracticeSetupPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => router.push(`/admin/practioner-setup/edit/${practitioner.practitioner_uuid}`)}
+                  >
                     Edit
                   </Button>
                 </TableCell>
