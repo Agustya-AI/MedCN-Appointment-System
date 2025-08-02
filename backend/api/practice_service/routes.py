@@ -9,8 +9,10 @@ from .utils import (
     add_practitioner, edit_practitioner, delete_practitioner, get_all_practitioners,
     edit_practitioner_appointments, get_all_appointments, create_appointment_type,
     get_practitioner_availability_slots, add_availability_slot, edit_availability_slot,
-    delete_availability_slot, get_all_practitioners_with_availability
+    delete_availability_slot, get_all_practitioners_with_availability,
+    add_practice_details
 )
+
 
 router = APIRouter(
     tags=["Practics"],
@@ -99,6 +101,14 @@ async def practice_details(user_token: str = Query(..., description="User authen
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current practice not found")
     
+
+@router.post("/add-practice-setup")
+async def add_practice_details_route(user_token: str = Query(..., description="User authentication token"), practice_details: dict = ...):
+    try:
+        practice_user = await run_in_threadpool(add_practice_details, user_token, practice_details)
+        return practice_user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 @router.put("/edit-practice-details")
 async def edit_practice_details_route(user_token: str = Query(..., description="User authentication token"), practice_details: dict = ...):

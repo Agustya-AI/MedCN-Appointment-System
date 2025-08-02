@@ -1,11 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Icon } from '@iconify/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { adminRoutes } from '@/constants/adminRoutes'
 import { cn } from '@/lib/utils'
+import usePracticeData from '../_hooks/usePracticeData'
 
 
 export default function AdminPortalLayout({
@@ -14,6 +15,10 @@ export default function AdminPortalLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+
+
+  const { practice } = usePracticeData();
+
   return (
     <div className="min-h-screen flex">
       {/* Navbar */}

@@ -72,7 +72,27 @@ def get_practice_details(user_token: str):
     except Exception as e:
         raise Exception(str(e))
     
-    
+def add_practice_details(user_token: str, practice_details: dict):
+    try:
+        practice_user = PractionerUser.objects.filter(token=user_token).first()
+        if not practice_user:
+            raise Exception("User not found")
+        
+        # Create practice with all fields from practice_details
+        create_fields = {"practice_owner": practice_user}
+        for field, value in practice_details.items():
+            if hasattr(PracticeRegistry, field):
+                create_fields[field] = value
+                
+        practice = PracticeRegistry.objects.create(**create_fields)
+        
+        return {
+            "message": "Practice created successfully",
+            "practice_uuid": str(practice.practice_uuid)
+        }
+    except Exception as e:
+        raise Exception(str(e))
+
 def edit_practice_details(user_token: str, practice_details: dict):
     try:
         # First get the user from token
