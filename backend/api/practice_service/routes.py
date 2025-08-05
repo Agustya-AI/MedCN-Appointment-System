@@ -60,8 +60,8 @@ class AppointmentAssignmentRequest(BaseModel):
 
 class AppointmentTypeRequest(BaseModel):
     type_of_consultation: str
-    patient_type: str
-    patient_duration: str
+    appointment_patient_type: str
+    appointment_patient_duration: str
     is_enabled: Optional[bool] = True
 
 class AvailabilitySlotRequest(BaseModel):
@@ -194,7 +194,7 @@ async def edit_practitioner_appointments_route(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/appointments")
+@router.get("/appointment-types")
 async def get_appointments_route(
     user_token: str = Query(..., description="User authentication token")
 ):

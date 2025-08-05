@@ -37,20 +37,22 @@ class PracticeRegistry(models.Model):
     def __str__(self):
         return self.practice_name
 
-class Appointment(models.Model):
+class AppointmentType(models.Model):
     appointment_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    is_enabled = models.BooleanField(default=True)
+    is_appointment_enabled = models.BooleanField(default=True)
     type_of_consultation = models.CharField(max_length=255)
-    patient_type = models.CharField(max_length=255)
-    patient_duration = models.CharField(max_length=255)
+    
+    appointment_patient_type = models.CharField(max_length=255)
+    appointment_patient_duration = models.CharField(max_length=255)
+    appointment_description = models.TextField(null=True, blank=True)
     
     def __str__(self):
-        return f"{self.type_of_consultation} - {self.patient_type}"
+        return f"{self.type_of_consultation} - {self.appointment_patient_type}"
     
     
 class PractionerRegistry(models.Model):
     practitioner_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    practice_belong_to = models.ForeignKey(PracticeRegistry, on_delete=models.CASCADE)
+    practioner_belong_to = models.ForeignKey(PracticeRegistry, on_delete=models.CASCADE)
     display_name = models.CharField(max_length=255)
     link_to_best_practice = models.CharField(max_length=255, null=True, blank=True)
     gender = models.CharField(max_length=50, null=True, blank=True)
@@ -61,7 +63,7 @@ class PractionerRegistry(models.Model):
     
     professional_statement = models.TextField(null=True, blank=True)
     professional_areas_of_interest = models.JSONField(null=True, blank=True)
-    appointments = models.ManyToManyField(Appointment, blank=True)
+    appointments = models.ManyToManyField(AppointmentType, blank=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

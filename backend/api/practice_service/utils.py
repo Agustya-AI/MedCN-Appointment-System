@@ -1,9 +1,9 @@
-from practiceapp.models import PractionerUser, PractionerRegistry, PracticeRegistry, Appointment, AvailabilitySlot
+from practiceapp.models import PractionerUser, PractionerRegistry, PracticeRegistry, AppointmentType, AvailabilitySlot
 from django.core.exceptions import ObjectDoesNotExist
 from uuid import uuid4
 from datetime import time
 from django.db import models
-
+import uuid
 
 def register_user(name, email, password):
     try:
@@ -146,11 +146,11 @@ def add_practitioner(user_token: str, practitioner_data: dict):
         practice = get_user_practice(user_token)
         
         # Create practitioner with dynamic fields
-        practitioner = PractionerRegistry(practice_belong_to=practice)
+        practitioner = PractionerRegistry(practioner_belong_to=practice)
         
         # Set fields dynamically
         for field, value in practitioner_data.items():
-            if hasattr(practitioner, field) and field not in ['id', 'practitioner_uuid', 'practice_belong_to']:
+            if hasattr(practitioner, field) and field not in ['id', 'practitioner_uuid', 'practioner_belong_to']:
                 setattr(practitioner, field, value)
         
         practitioner.save()
@@ -172,7 +172,7 @@ def edit_practitioner(user_token: str, practitioner_uuid: str, practitioner_data
         
         practitioner = PractionerRegistry.objects.filter(
             practitioner_uuid=practitioner_uuid,
-            practice_belong_to=practice
+            practioner_belong_to=practice
         ).first()
         
         if not practitioner:
@@ -180,7 +180,7 @@ def edit_practitioner(user_token: str, practitioner_uuid: str, practitioner_data
         
         # Update fields dynamically
         for field, value in practitioner_data.items():
-            if hasattr(practitioner, field) and field not in ['id', 'practitioner_uuid', 'practice_belong_to']:
+            if hasattr(practitioner, field) and field not in ['id', 'practitioner_uuid', 'practioner_belong_to']:
                 setattr(practitioner, field, value)
         
         practitioner.save()
@@ -197,7 +197,7 @@ def delete_practitioner(user_token: str, practitioner_uuid: str):
         
         practitioner = PractionerRegistry.objects.filter(
             practitioner_uuid=practitioner_uuid,
-            practice_belong_to=practice
+            practioner_belong_to=practice
         ).first()
         
         if not practitioner:
@@ -217,7 +217,7 @@ def get_all_practitioners(user_token: str):
         practice = get_user_practice(user_token)
         
         practitioners = PractionerRegistry.objects.filter(
-            practice_belong_to=practice,
+            practioner_belong_to=practice,
             is_active=True
         )
         
@@ -250,14 +250,14 @@ def edit_practitioner_appointments(user_token: str, practitioner_uuid: str, appo
         
         practitioner = PractionerRegistry.objects.filter(
             practitioner_uuid=practitioner_uuid,
-            practice_belong_to=practice
+            practioner_belong_to=practice
         ).first()
         
         if not practitioner:
             raise Exception("Practitioner not found")
         
         # Get appointments by their UUIDs
-        appointments = Appointment.objects.filter(appointment_uuid__in=appointment_uuids)
+        appointments = AppointmentType.objects.filter(appointment_uuid__in=appointment_uuids)
         
         # Clear existing appointments and set new ones
         practitioner.appointments.clear()
@@ -279,17 +279,23 @@ def get_all_appointments(user_token: str):
         if not practice_user:
             raise Exception("User not found")
         
-        appointments = Appointment.objects.filter(is_enabled=True)
+        appointments = AppointmentType.objects.filter(is_appointment_enabled=True)
         
         appointments_list = []
         for appointment in appointments:
-            appointments_list.append({
-                "appointment_uuid": str(appointment.appointment_uuid),
-                "type_of_consultation": appointment.type_of_consultation,
-                "patient_type": appointment.patient_type,
-                "patient_duration": appointment.patient_duration,
-                "is_enabled": appointment.is_enabled
-            })
+            appointment_dict = {}
+            # Dynamically add all fields from the model
+            for field in appointment._meta.fields:
+                field_name = field.name
+                field_value = getattr(appointment, field_name)
+                
+                # Convert UUID fields to string
+                if isinstance(field_value, uuid.UUID):
+                    field_value = str(field_value)
+                    
+                appointment_dict[field_name] = field_value
+                
+            appointments_list.append(appointment_dict)
         
         return appointments_list
     except Exception as e:
@@ -297,28 +303,29 @@ def get_all_appointments(user_token: str):
 
 
 def create_appointment_type(user_token: str, appointment_data: dict):
-    """Create a new appointment type"""
+    """Create a new AppointmentType type"""
     try:
         # Verify user exists
         practice_user = PractionerUser.objects.filter(token=user_token).first()
         if not practice_user:
             raise Exception("User not found")
         
-        appointment = Appointment()
+        appointment_type = AppointmentType()
         
         # Set fields dynamically
         for field, value in appointment_data.items():
-            if hasattr(appointment, field) and field not in ['id', 'appointment_uuid']:
-                setattr(appointment, field, value)
+            if hasattr(appointment_type, field) and field not in ['id', 'appointment_uuid']:
+                setattr(appointment_type, field, value)
         
-        appointment.save()
+        appointment_type.save()
         
         return {
-            "appointment_uuid": str(appointment.appointment_uuid),
-            "type_of_consultation": appointment.type_of_consultation,
-            "message": "Appointment type created successfully"
+            "appointment_uuid": str(appointment_type.appointment_uuid),
+            "type_of_consultation": appointment_type.type_of_consultation,
+            "message": "AppointmentType type created successfully"
         }
     except Exception as e:
+        print(str(e))
         raise Exception(str(e))
 
 
@@ -331,7 +338,7 @@ def get_practitioner_availability_slots(user_token: str, practitioner_uuid: str)
         
         practitioner = PractionerRegistry.objects.filter(
             practitioner_uuid=practitioner_uuid,
-            practice_belong_to=practice
+            practioner_belong_to=practice
         ).first()
         
         if not practitioner:
@@ -371,7 +378,7 @@ def add_availability_slot(user_token: str, practitioner_uuid: str, slot_data: di
         
         practitioner = PractionerRegistry.objects.filter(
             practitioner_uuid=practitioner_uuid,
-            practice_belong_to=practice
+            practioner_belong_to=practice
         ).first()
         
         if not practitioner:
@@ -423,7 +430,7 @@ def edit_availability_slot(user_token: str, availability_uuid: str, slot_data: d
         
         availability_slot = AvailabilitySlot.objects.filter(
             availability_uuid=availability_uuid,
-            practitioner__practice_belong_to=practice
+            practitioner__practioner_belong_to=practice
         ).first()
         
         if not availability_slot:
@@ -483,7 +490,7 @@ def delete_availability_slot(user_token: str, availability_uuid: str):
         
         availability_slot = AvailabilitySlot.objects.filter(
             availability_uuid=availability_uuid,
-            practitioner__practice_belong_to=practice
+            practitioner__practioner_belong_to=practice
         ).first()
         
         if not availability_slot:
@@ -503,7 +510,7 @@ def get_all_practitioners_with_availability(user_token: str):
         practice = get_user_practice(user_token)
         
         practitioners = PractionerRegistry.objects.filter(
-            practice_belong_to=practice,
+            practioner_belong_to=practice,
             is_active=True
         ).prefetch_related('availability_slots')
         
