@@ -6,6 +6,19 @@ import uuid
 from practiceapp.models import PractionerRegistry, AppointmentType
 
 
+
+
+class PatientFamilyMember(models.Model):
+    patient_family_member_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    first_name = models.CharField(max_length=255)
+    date_of_birth = models.DateField()
+    gender = models.CharField(max_length=255, null=True, blank=True)
+    relationship = models.CharField(max_length=255, null=True, blank=True)
+    
+    
+    def __str__(self) -> str:
+        return self.first_name + " " + self.relationship
+    
 class PatientUser(models.Model):
     # Add fields for email, uuid (auto_add), password, first_name, date_of_birth
     # Optional fields Gender, mobile_number
@@ -20,6 +33,7 @@ class PatientUser(models.Model):
     is_verified = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
     token = models.CharField(max_length=255, null=True, blank=True)
+    patient_family_members = models.ManyToManyField(PatientFamilyMember, blank=True)
     
     def __str__(self):
         return self.first_name
@@ -31,6 +45,9 @@ class PatientUser(models.Model):
     def save(self, *args, **kwargs):
         self.is_verified = True
         super().save(*args, **kwargs)
+
+
+
 
 class PatientBooking(models.Model):
     patient_booking_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
