@@ -65,9 +65,9 @@ class AppointmentTypeRequest(BaseModel):
     is_enabled: Optional[bool] = True
 
 class AvailabilitySlotRequest(BaseModel):
-    day_of_week: str  # 'MONDAY', 'TUESDAY', etc.
-    start_time: str   # Format: 'HH:MM' (24-hour format)
-    end_time: str     # Format: 'HH:MM' (24-hour format)
+    day_of_week: str    
+    start_time: str     
+    end_time: str
 
 class AvailabilitySlotUpdateRequest(BaseModel):
     day_of_week: Optional[str] = None
