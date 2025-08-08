@@ -37,6 +37,26 @@ class PracticeRegistry(models.Model):
     def __str__(self):
         return self.practice_name
 
+
+class PracticeMembers(models.Model):
+    ROLE_CHOICES = [
+        ('OWNER', 'Owner'),
+        ('STAFF', 'Staff'),
+        ('ADMIN', 'Admin'),
+    ]
+
+    practice = models.ForeignKey(PracticeRegistry, on_delete=models.CASCADE, related_name='members')
+    user = models.ForeignKey(PractionerUser, on_delete=models.CASCADE, related_name='member_of_practices')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='STAFF')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('practice', 'user')
+
+    def __str__(self):
+        return f"{self.user.name} - {self.practice.practice_name} ({self.role})"
+
 class AppointmentType(models.Model):
     appointment_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     is_appointment_enabled = models.BooleanField(default=True)

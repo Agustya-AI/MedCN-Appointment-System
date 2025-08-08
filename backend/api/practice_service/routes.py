@@ -10,7 +10,8 @@ from .utils import (
     edit_practitioner_appointments, get_all_appointments, create_appointment_type,
     get_practitioner_availability_slots, add_availability_slot, edit_availability_slot,
     delete_availability_slot, get_all_practitioners_with_availability,
-    add_practice_details
+    add_practice_details,
+    add_member, edit_member, get_all_members
 )
 
 
@@ -75,6 +76,17 @@ class AvailabilitySlotUpdateRequest(BaseModel):
     end_time: Optional[str] = None
     is_active: Optional[bool] = None
 
+
+class MemberAddRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    role: Optional[str] = 'STAFF'
+
+
+class MemberEditRequest(BaseModel):
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+
 @router.post("/register")
 async def practice_register(request: RegisterRequest):
     try:
@@ -89,6 +101,45 @@ async def practice_login(request: LoginRequest):
     try:
         practice_user = await run_in_threadpool(login_user, request.email, request.password)
         return practice_user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# Practice member management routes
+
+@router.post("/members")
+async def add_member_route(
+    request: MemberAddRequest,
+    user_token: str = Query(..., description="User authentication token")
+):
+    try:
+        result = await run_in_threadpool(add_member, user_token, request.email, request.role, request.name)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/members")
+async def edit_member_route(
+    request: MemberEditRequest,
+    member_email: str = Query(..., description="Email of the member to edit"),
+    user_token: str = Query(..., description="User authentication token")
+):
+    try:
+        updates = request.model_dump(exclude_unset=True)
+        result = await run_in_threadpool(edit_member, user_token, member_email, updates)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/members")
+async def get_members_route(
+    user_token: str = Query(..., description="User authentication token")
+):
+    try:
+        members = await run_in_threadpool(get_all_members, user_token)
+        return {"members": members}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

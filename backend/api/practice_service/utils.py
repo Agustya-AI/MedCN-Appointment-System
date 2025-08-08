@@ -1,4 +1,4 @@
-from practiceapp.models import PractionerUser, PractionerRegistry, PracticeRegistry, AppointmentType, AvailabilitySlot
+from practiceapp.models import PractionerUser, PractionerRegistry, PracticeRegistry, AppointmentType, AvailabilitySlot, PracticeMembers
 from django.core.exceptions import ObjectDoesNotExist
 from uuid import uuid4
 from datetime import time
@@ -47,15 +47,26 @@ def get_practice_details(user_token: str):
         practice_user = PractionerUser.objects.filter(token=user_token).first()
         if not practice_user:
             raise Exception("User not found")
-            
-        # Then get the practice owned by this user
+
+        # Prefer resolving via explicit owner first (backward compatibility)
         practice = PracticeRegistry.objects.filter(practice_owner=practice_user).first()
         if not practice:
-            # Fallback to old method using practice_associated_with
+            # Fallback to membership relation if the user is a staff/admin
+            membership = (
+                PracticeMembers.objects
+                .filter(user=practice_user, is_active=True)
+                .select_related('practice')
+                .first()
+            )
+            if membership:
+                practice = membership.practice
+
+        if not practice:
+            # Final fallback to legacy token association method
             practice = PracticeRegistry.objects.filter(practice_associated_with=user_token).first()
             if not practice:
                 raise Exception("Practice not found")
-        
+
         return {
             "practice_uuid": str(practice.practice_uuid),
             "practice_name": practice.practice_name,
@@ -85,6 +96,9 @@ def add_practice_details(user_token: str, practice_details: dict):
                 create_fields[field] = value
                 
         practice = PracticeRegistry.objects.create(**create_fields)
+
+        # Also create membership for this user as the OWNER of the practice
+        PracticeMembers.objects.create(practice=practice, user=practice_user, role='OWNER')
         
         return {
             "message": "Practice created successfully",
@@ -95,18 +109,8 @@ def add_practice_details(user_token: str, practice_details: dict):
 
 def edit_practice_details(user_token: str, practice_details: dict):
     try:
-        # First get the user from token
-        practice_user = PractionerUser.objects.filter(token=user_token).first()
-        if not practice_user:
-            raise Exception("User not found")
-            
-        # Then get the practice owned by this user
-        practice = PracticeRegistry.objects.filter(practice_owner=practice_user).first()
-        if not practice:
-            # Fallback to old method
-            practice = PracticeRegistry.objects.filter(practice_associated_with=user_token).first()
-            if not practice:
-                raise Exception("Practice not found")
+        # Fetch the practice linked to this user (owner or member)
+        practice = get_user_practice(user_token)
         
         # Update fields dynamically
         for field, value in practice_details.items():
@@ -125,10 +129,20 @@ def get_user_practice(user_token: str):
         practice_user = PractionerUser.objects.filter(token=user_token).first()
         if not practice_user:
             raise Exception("User not found")
-            
+
+        # Prefer owner mapping first
         practice = PracticeRegistry.objects.filter(practice_owner=practice_user).first()
         if not practice:
-            # Fallback to old method
+            # Fallback to membership relation
+            membership = (
+                PracticeMembers.objects
+                .filter(user=practice_user, is_active=True)
+                .select_related('practice')
+                .first()
+            )
+            if membership:
+                return membership.practice
+            # Final fallback to old token-based association
             practice = PracticeRegistry.objects.filter(practice_associated_with=user_token).first()
             if not practice:
                 raise Exception("Practice not found")
@@ -367,6 +381,149 @@ def get_practitioner_availability_slots(user_token: str, practitioner_uuid: str)
             "practitioner_uuid": str(practitioner.practitioner_uuid),
             "availability_slots": slots_list
         }
+    except Exception as e:
+        raise Exception(str(e))
+
+
+# Practice Members Management Functions
+
+def add_member(user_token: str, member_email: str, role: str = 'STAFF', member_name: str | None = None):
+    """Add a user as a member of the current practice with a role.
+
+    Constraints:
+    - Owner remains the same: cannot assign OWNER role to a user who is not the current practice owner.
+    - Upserts an existing membership for this user/practice (updates role and activates).
+    """
+    try:
+        practice = get_user_practice(user_token)
+
+        # Resolve user by email
+        target_user = PractionerUser.objects.filter(email=member_email).first()
+        created_user = False
+        temp_password = None
+        if not target_user:
+            # Auto-provision a basic user who can log in
+            temp_password = str(uuid4())[:12]
+            target_user = PractionerUser.objects.create(
+                name=member_name or member_email.split('@')[0],
+                email=member_email,
+                password=temp_password,
+                is_active=True,
+                is_verified=True,
+                is_deleted=False,
+            )
+            created_user = True
+
+        # Enforce owner invariants
+        if role == 'OWNER' and target_user != practice.practice_owner:
+            raise Exception("Cannot assign OWNER role to a non-owner user")
+
+        membership, _created = PracticeMembers.objects.get_or_create(
+            practice=practice,
+            user=target_user,
+            defaults={"role": role, "is_active": True},
+        )
+
+        # If existing, update role/is_active
+        if not _created:
+            # Prevent changing owner's membership role away from OWNER
+            if membership.role == 'OWNER' and role != 'OWNER':
+                raise Exception("Cannot change role of the OWNER membership")
+            membership.role = role or membership.role
+            membership.is_active = True
+            membership.save()
+
+        response = {
+            "message": "Member added successfully",
+            "member": {
+                "user_email": target_user.email,
+                "user_name": target_user.name,
+                "role": membership.role,
+                "is_active": membership.is_active,
+            },
+        }
+        if created_user:
+            response["created_user"] = True
+            response["temporary_password"] = temp_password
+        return response
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def edit_member(user_token: str, member_email: str, updates: dict):
+    """Edit an existing member's role or active status.
+
+    Constraints:
+    - Cannot change OWNER role assignment; owner remains the same.
+    - Cannot assign OWNER to a non-owner.
+    """
+    try:
+        practice = get_user_practice(user_token)
+
+        target_user = PractionerUser.objects.filter(email=member_email).first()
+        if not target_user:
+            raise Exception("Target user not found")
+
+        membership = PracticeMembers.objects.filter(practice=practice, user=target_user).first()
+        if not membership:
+            raise Exception("Membership not found for this user in the practice")
+
+        # Handle role update
+        new_role = updates.get("role")
+        if new_role:
+            if membership.role == 'OWNER' and new_role != 'OWNER':
+                raise Exception("Cannot change role of the OWNER membership")
+            if new_role == 'OWNER' and target_user != practice.practice_owner:
+                raise Exception("Cannot assign OWNER role to a non-owner user")
+            membership.role = new_role
+
+        # Handle is_active update
+        if "is_active" in updates:
+            if membership.role == 'OWNER' and updates["is_active"] is False:
+                raise Exception("Cannot deactivate the OWNER membership")
+            membership.is_active = bool(updates["is_active"])
+
+        membership.save()
+
+        return {"message": "Member updated successfully"}
+    except Exception as e:
+        raise Exception(str(e))
+
+
+def get_all_members(user_token: str):
+    """Return all members for the practice, including the owner.
+
+    The owner is returned from the PracticeRegistry.owner field to keep it canonical,
+    while other members are returned from PracticeMembers. The owner's membership
+    (if present) is not duplicated.
+    """
+    try:
+        practice = get_user_practice(user_token)
+
+        members_list = []
+        # Include owner first
+        owner = practice.practice_owner
+        if owner:
+            members_list.append({
+                "user_email": owner.email,
+                "user_name": owner.name,
+                "role": "OWNER",
+                "is_active": True,
+            })
+
+        # Include other members (excluding owner if present)
+        qs = PracticeMembers.objects.filter(practice=practice, is_active=True).select_related('user')
+        for m in qs:
+            if owner and m.user_id == owner.id:
+                continue
+            members_list.append({
+                "user_email": m.user.email,
+                "user_name": m.user.name,
+                "role": m.role,
+                "is_active": m.is_active,
+            })
+
+        return members_list
     except Exception as e:
         raise Exception(str(e))
 
