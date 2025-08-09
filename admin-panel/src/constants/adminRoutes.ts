@@ -11,5 +11,6 @@ export const adminRoutes: AdminRoute[] = [
   { href: '/admin/settings', label: 'Settings', icon: 'mdi:cog' },
   { href: "/admin/appointment-types", label: "Appointment Types", icon: "mdi:calendar-multiple" },
   { href: "/admin/practice-setup", label: "Practice Settings", icon: "mdi:hospital-building" },
-  { href: "/admin/practioner-setup", label: "Practioner Setup", icon: "mdi:account" }
+  { href: "/admin/practioner-setup", label: "Practioner Setup", icon: "mdi:account" },
+  { href: "/admin/practice-members", label: "Practice Members", icon: "mdi:account-group" }
 ]

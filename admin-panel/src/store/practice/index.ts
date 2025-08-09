@@ -8,6 +8,7 @@ interface PracticeState {
     practiceAppointmentTypes: any,
     practionerAvailability:any,
     currentPractionerAvailability:any,
+    practiceMembers: any,
 }
 
 const initialState: PracticeState = {
@@ -15,7 +16,8 @@ const initialState: PracticeState = {
     allPractionersAssociatedWithPractice: [],
     practiceAppointmentTypes: [],
     practionerAvailability: [],
-    currentPractionerAvailability: {}
+    currentPractionerAvailability: {},
+    practiceMembers: [],
 }
 
 
@@ -31,11 +33,14 @@ const slice = createSlice({
         },
         setPracticeAppointmentTypes: (state, action) => {
             state.practiceAppointmentTypes = action.payload
-        }
+        },
+        setPracticeMembers: (state, action) => {
+            state.practiceMembers = action.payload
+        },
     }
 })
 
 
-export const {setCurrentPracticeDetails, setAllPractionersAssociatedWithPractice, setPracticeAppointmentTypes} = slice.actions
+export const {setCurrentPracticeDetails, setAllPractionersAssociatedWithPractice, setPracticeAppointmentTypes, setPracticeMembers} = slice.actions
 
 export default slice.reducer;
