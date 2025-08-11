@@ -67,6 +67,8 @@ export default function AppointmentsPage() {
     }
   }
 
+  
+
   const fetchAvailability = async (doctorId: number) => {
     try {
       setLoading(true)
