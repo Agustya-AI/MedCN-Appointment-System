@@ -25,7 +25,7 @@ function NavItem({ icon, label, expanded, onClick }: NavItemProps) {
     <Button
       variant="ghost"
       className={cn(
-        "w-full justify-start gap-4 p-4 hover:bg-blue-600/50 text-white",
+        "w-full justify-start gap-4 p-4 hover:bg-blue-600 hover:text-white text-white cursor-pointer",
         !expanded && "justify-center p-2"
       )}
       onClick={onClick}
@@ -43,10 +43,9 @@ export default function DashboardLayout({children}: {children: React.ReactNode})
     <div className="flex min-h-screen bg-background">
       {/* Floating Sidebar */}
       <div className={cn(
-        "fixed left-4 top-4 z-40 flex h-[calc(100vh-2rem)] flex-col rounded-xl border bg-blue-500 shadow-lg transition-all duration-300",
+        "fixed left-4 top-4 z-40 flex h-[calc(100vh-2rem)] flex-col rounded-xl border bg-blue-600 shadow-lg transition-all duration-300",
         isExpanded ? "w-64" : "w-16"
       )}>
-        
         {/* Toggle button */}
         <Button
           variant="ghost"

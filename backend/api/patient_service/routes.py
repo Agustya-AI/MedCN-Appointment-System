@@ -28,16 +28,16 @@ async def register(details: dict):
         result = await run_in_threadpool(register_patient, details)
         return {"status": "success", "data": result}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/login") 
 async def login(details: dict):
     try:
         result = await run_in_threadpool(login_patient, details)
-        return {"status": "success", "data": result}
+        return {"status": "success", "token": result["token"]}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
 # ------------------------------
