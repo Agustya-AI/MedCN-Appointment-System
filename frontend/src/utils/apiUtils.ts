@@ -1,10 +1,7 @@
-import axios from "axios";
+import axios from "axios"
 
+const axiosInstance = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9090/api/v1",
+})
 
-
-const appAPI = axios.create({
-    baseURL: "https://medcn-appointment-system.onrender.com/api/v1",
-
-});
-
-export default appAPI;
+export default axiosInstance

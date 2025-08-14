@@ -25,12 +25,12 @@ export default function Navbar() {
 
           {/* Call Us Button */}
           <div className="flex items-center">
-            <a 
-              href="tel:+1234567890" 
+            <Link
+              href="/auth" 
               className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-full font-medium hover:from-blue-700 hover:to-blue-800 transition-all hover:shadow-lg hover:scale-105"
             >
-              Call Us
-            </a>
+              Login
+            </Link>
           </div>
         </div>
       </div>
