@@ -96,159 +96,172 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {/* Greeting Card */}
-        <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">
-                  {getGreeting()}, {user.name.split(' ')[0]}!
-                </h1>
-                <p className="text-blue-100 text-lg">
-                  Welcome back to your health dashboard
-                </p>
-              </div>
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
-                {user.avatar}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content - Calendar & Appointments */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Search Bar */}
-            <Card className="shadow-md">
-              <CardContent className="p-4">
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input 
-                      placeholder="Search for doctors, specialties, or hospitals..."
-                      className="pl-10 pr-4 py-2 border-gray-200 focus:border-blue-500"
-                    />
-                  </div>
-                  <Button className="bg-blue-500 hover:bg-blue-600">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filter
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Calendar Section */}
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-blue-500" />
-                  Your Appointments
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {appointments.map((appointment) => (
-                    <div key={appointment.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Stethoscope className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{appointment.doctor}</h3>
-                          <p className="text-sm text-gray-600">{appointment.specialty}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Building2 className="h-3 w-3 text-gray-400" />
-                            <span className="text-xs text-gray-500">{appointment.hospital}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm font-medium">{appointment.date}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="h-3 w-3 text-gray-400" />
-                          <span className="text-sm">{appointment.time}</span>
-                        </div>
-                        <Badge 
-                          variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}
-                          className={appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
-                        >
-                          {appointment.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full border-dashed border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Book New Appointment
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+      <div className="p-8 bg-slate-50 min-h-screen">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Greeting Section */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-light text-slate-800 mb-2">
+              {getGreeting()}, <span className="font-medium text-blue-700">{user.name.split(' ')[0]}</span>
+            </h1>
+            <p className="text-lg text-slate-600 font-light">
+              Welcome back to your health dashboard
+            </p>
           </div>
 
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* Notifications */}
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-blue-500" />
-                  Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {notifications.map((notification) => (
-                    <div key={notification.id} className="p-3 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                      <p className="text-sm text-gray-700 mb-1">{notification.message}</p>
-                      <span className="text-xs text-gray-500">{notification.time}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-3 space-y-8">
+              {/* Search Bar */}
+              <Card className="border-0 shadow-sm bg-white">
+                <CardContent className="p-6">
+                  <div className="flex gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                      <Input 
+                        placeholder="Search for doctors, specialties, or hospitals..."
+                        className="pl-12 pr-4 py-3 border-slate-200 focus:border-blue-400 text-base bg-slate-50 focus:bg-white transition-colors"
+                      />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <Button variant="outline" className="px-6 py-3 border-blue-200 text-blue-700 hover:bg-blue-50">
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filter
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Doctors & Hospitals History */}
-            <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-blue-500" />
-                  Recent Doctors
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {doctors.map((doctor) => (
-                    <div key={doctor.id} className="p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm text-gray-900">{doctor.name}</h4>
-                          <p className="text-xs text-gray-600">{doctor.specialty}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Building2 className="h-3 w-3 text-gray-400" />
-                            <span className="text-xs text-gray-500">{doctor.hospital}</span>
+              {/* Appointments Section */}
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl font-medium text-slate-800 flex items-center gap-3">
+                    <Calendar className="h-6 w-6 text-blue-600" />
+                    Your Appointments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-6">
+                    {appointments.map((appointment) => (
+                      <div key={appointment.id} className="p-6 border border-slate-100 rounded-xl hover:border-blue-200 transition-colors bg-slate-50/50 hover:bg-blue-50/30">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Stethoscope className="h-7 w-7 text-blue-600" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-medium text-slate-800 mb-1">{appointment.doctor}</h3>
+                              <p className="text-blue-600 mb-2 font-medium">{appointment.specialty}</p>
+                              <div className="flex items-center gap-2">
+                                <Building2 className="h-4 w-4 text-slate-400" />
+                                <span className="text-sm text-slate-500">{appointment.hospital}</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm font-medium text-yellow-600">★</span>
-                            <span className="text-xs text-gray-600">{doctor.rating}</span>
+                          <div className="text-right">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Calendar className="h-4 w-4 text-slate-400" />
+                              <span className="text-sm font-medium text-slate-700">{appointment.date}</span>
+                            </div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <Clock className="h-4 w-4 text-slate-400" />
+                              <span className="text-sm text-slate-600">{appointment.time}</span>
+                            </div>
+                            <Badge 
+                              variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}
+                              className={`${
+                                appointment.status === 'confirmed' 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                  : 'bg-amber-50 text-amber-700 border-amber-200'
+                              } font-medium`}
+                            >
+                              {appointment.status}
+                            </Badge>
                           </div>
-                          <p className="text-xs text-gray-500">{doctor.experience}</p>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-16 border-dashed border-2 border-blue-300 hover:border-blue-400 hover:bg-blue-50 text-blue-700"
+                    >
+                      <Plus className="h-5 w-5 mr-3" />
+                      Book New Appointment
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Sidebar */}
+            <div className="space-y-8">
+              {/* User Profile Card */}
+              <Card className="border-0 shadow-sm bg-white border-t-4 border-t-blue-500">
+                <CardContent className="p-6 text-center">
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-medium text-blue-700 mx-auto mb-4">
+                    {user.avatar}
+                  </div>
+                  <h3 className="text-lg font-medium text-slate-800 mb-1">{user.name}</h3>
+                  <p className="text-sm text-blue-600">Patient ID: #12345</p>
+                </CardContent>
+              </Card>
+
+              {/* Notifications */}
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-medium text-slate-800 flex items-center gap-3">
+                    <Bell className="h-5 w-5 text-orange-500" />
+                    Notifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className="p-4 bg-orange-50 rounded-lg border-l-4 border-orange-300">
+                        <p className="text-sm text-slate-700 mb-2 leading-relaxed">{notification.message}</p>
+                        <span className="text-xs text-orange-600 font-medium">{notification.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Doctors */}
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-medium text-slate-800 flex items-center gap-3">
+                    <User className="h-5 w-5 text-purple-500" />
+                    Recent Doctors
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    {doctors.map((doctor) => (
+                      <div key={doctor.id} className="p-4 border border-slate-100 rounded-lg hover:border-purple-200 hover:bg-purple-50/30 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <User className="h-6 w-6 text-purple-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-slate-800 mb-1 truncate">{doctor.name}</h4>
+                            <p className="text-sm text-purple-600 font-medium mb-1">{doctor.specialty}</p>
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                              <span className="text-xs text-slate-500 truncate">{doctor.hospital}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center gap-1 mb-1">
+                              <span className="text-sm text-amber-500">★</span>
+                              <span className="text-sm font-medium text-slate-700">{doctor.rating}</span>
+                            </div>
+                            <p className="text-xs text-slate-500">{doctor.experience}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

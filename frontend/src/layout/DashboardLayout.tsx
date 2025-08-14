@@ -11,6 +11,9 @@ import {
   LogInIcon,
   LogOutIcon,
   MenuIcon,
+  BarChartIcon,
+  LineChartIcon,
+  PieChartIcon
 } from "lucide-react"
 
 interface NavItemProps {
@@ -25,13 +28,13 @@ function NavItem({ icon, label, expanded, onClick }: NavItemProps) {
     <Button
       variant="ghost"
       className={cn(
-        "w-full justify-start gap-4 p-4 hover:bg-blue-600 hover:text-white text-white cursor-pointer",
+        "w-full justify-start gap-4 p-4 hover:bg-blue-500/80 hover:text-white text-white cursor-pointer transition-all duration-200",
         !expanded && "justify-center p-2"
       )}
       onClick={onClick}
     >
       {icon}
-      {expanded && <span>{label}</span>}
+      {expanded && <span className="font-medium">{label}</span>}
     </Button>
   )
 }
@@ -40,10 +43,10 @@ export default function DashboardLayout({children}: {children: React.ReactNode})
   const [isExpanded, setIsExpanded] = React.useState(false)
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Floating Sidebar */}
       <div className={cn(
-        "fixed left-4 top-4 z-40 flex h-[calc(100vh-2rem)] flex-col rounded-xl border bg-blue-600 shadow-lg transition-all duration-300",
+        "fixed left-4 top-4 z-40 flex h-[calc(100vh-2rem)] flex-col rounded-xl border bg-gradient-to-b from-blue-600 to-blue-700 shadow-xl transition-all duration-300 backdrop-blur-lg",
         isExpanded ? "w-64" : "w-16"
       )}>
         {/* Toggle button */}
@@ -51,7 +54,7 @@ export default function DashboardLayout({children}: {children: React.ReactNode})
           variant="ghost"
           size="icon"
           className={cn(
-            "self-end p-2 pt-4 text-white hover:bg-blue-600/50",
+            "self-end p-2 pt-4 text-white hover:bg-white/10 transition-colors duration-200",
             isExpanded ? "ml-64" : "m-auto"
           )}
           onClick={() => setIsExpanded(!isExpanded)}
@@ -61,15 +64,17 @@ export default function DashboardLayout({children}: {children: React.ReactNode})
 
         {/* Nav items */}
         <nav className="flex-1 space-y-2 p-2">
-          <NavItem icon={<HomeIcon className="h-4 w-4" />} label="Home" expanded={isExpanded} />
-          <NavItem icon={<SearchIcon className="h-4 w-4" />} label="Search" expanded={isExpanded} />
+          <NavItem icon={<HomeIcon className="h-4 w-4" />} label="Dashboard" expanded={isExpanded} />
+          <NavItem icon={<BarChartIcon className="h-4 w-4" />} label="Analytics" expanded={isExpanded} />
+          <NavItem icon={<LineChartIcon className="h-4 w-4" />} label="Reports" expanded={isExpanded} />
+          <NavItem icon={<PieChartIcon className="h-4 w-4" />} label="Statistics" expanded={isExpanded} />
           <NavItem icon={<CalendarIcon className="h-4 w-4" />} label="Appointments" expanded={isExpanded} />
-          <NavItem icon={<CalendarIcon className="h-4 w-4" />} label="Services" expanded={isExpanded} />
+          <NavItem icon={<SearchIcon className="h-4 w-4" />} label="Search" expanded={isExpanded} />
           <NavItem icon={<UserIcon className="h-4 w-4" />} label="Profile" expanded={isExpanded} />
         </nav>
 
         {/* Auth buttons */}
-        <div className="border-t border-blue-400 p-2 space-y-2">
+        <div className="border-t border-blue-400/30 p-2 space-y-2 backdrop-blur-sm">
           <NavItem icon={<LogInIcon className="h-4 w-4" />} label="Login" expanded={isExpanded} />
           <NavItem icon={<LogOutIcon className="h-4 w-4" />} label="Logout" expanded={isExpanded} />
         </div>
@@ -78,7 +83,7 @@ export default function DashboardLayout({children}: {children: React.ReactNode})
 
       {/* Main content */}
       <div className={cn(
-        "flex-1 p-8 transition-all duration-300",
+        "flex-1 p-8 transition-all duration-300 backdrop-blur-sm",
         isExpanded ? "ml-72" : "ml-24"
       )}>
         {children}
