@@ -2,7 +2,7 @@
 
 
 from platformuser.models import PatientUser, PatientFamilyMember
-
+from practiceapp.models import PracticeRegistry, PractionerRegistry
 import uuid
 
 
@@ -173,5 +173,32 @@ def delete_family_member(user_token: str, family_member_uuid: str):
         family_member.delete()
 
         return {"message": "Family member deleted successfully"}
+    except Exception as e:
+        raise Exception(str(e))
+    
+    
+def get_all_practices():
+    """Get all practices for a patient."""
+    try:
+      
+        practices = PracticeRegistry.objects.all().values('id', 'practice_name')
+        return list(practices)
+    except Exception as e:
+        raise Exception(str(e))
+    
+def get_practice_details(practice_id: int):
+    """Get details of a practice."""
+    try:
+        practice = PracticeRegistry.objects.get(id=practice_id)
+        return practice
+    except Exception as e:
+        raise Exception(str(e))
+    
+    
+def get_practice_practitioners(practice_id: int):
+    """Get all practitioners for a practice."""
+    try:
+        practitioners = PractionerRegistry.objects.filter(practioner_belong_to=practice_id)
+        return list(practitioners)
     except Exception as e:
         raise Exception(str(e))

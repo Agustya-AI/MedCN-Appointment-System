@@ -8,6 +8,9 @@ from .utils import (
     add_family_member,
     edit_family_member,
     delete_family_member,
+    get_all_practices,
+    get_practice_details,
+    get_practice_practitioners
 )
 from starlette.concurrency import run_in_threadpool
 
@@ -92,3 +95,32 @@ async def delete_family_member_route(
         return {"status": "success", "data": result}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+    
+@router.get("/practices")
+async def get_practices():
+    """Get all practices."""
+    try:
+        result = await run_in_threadpool(get_all_practices)
+        return  result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+@router.get("/practice/{practice_id}")
+async def get_practice(practice_id: int):
+    """Get details of a practice."""
+    try:
+        result = await run_in_threadpool(get_practice_details, practice_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+@router.get("/practice/{practice_id}/doctors")
+async def get_doctors(practice_id: int):
+    """Get all doctors for a practice."""
+    try:
+        result = await run_in_threadpool(get_practice_practitioners, practice_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    

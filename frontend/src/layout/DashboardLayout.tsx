@@ -15,15 +15,23 @@ import {
   LineChartIcon,
   PieChartIcon
 } from "lucide-react"
+import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { setSidebarOpen } from '@/store/app';
 
 interface NavItemProps {
   icon: React.ReactNode;
   label: string;
   expanded: boolean;
-  onClick?: () => void;
+  path: string;
 }
 
-function NavItem({ icon, label, expanded, onClick }: NavItemProps) {
+function NavItem({ icon, label, expanded, path }: NavItemProps) {
+
+
+  const router = useRouter();
+
   return (
     <Button
       variant="ghost"
@@ -31,7 +39,7 @@ function NavItem({ icon, label, expanded, onClick }: NavItemProps) {
         "w-full justify-start gap-4 p-4 hover:bg-blue-500/80 hover:text-white text-white cursor-pointer transition-all duration-200",
         !expanded && "justify-center p-2"
       )}
-      onClick={onClick}
+      onClick={() => router.push(path)}
     >
       {icon}
       {expanded && <span className="font-medium">{label}</span>}
@@ -40,14 +48,18 @@ function NavItem({ icon, label, expanded, onClick }: NavItemProps) {
 }
 
 export default function DashboardLayout({children}: {children: React.ReactNode}) {
-  const [isExpanded, setIsExpanded] = React.useState(false)
+
+
+  const isSidebarOpen = useSelector((state: RootState) => state.appService.isSidebarOpen);
+
+  const dispatch = useDispatch();
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Floating Sidebar */}
       <div className={cn(
         "fixed left-4 top-4 z-40 flex h-[calc(100vh-2rem)] flex-col rounded-xl border bg-gradient-to-b from-blue-600 to-blue-700 shadow-xl transition-all duration-300 backdrop-blur-lg",
-        isExpanded ? "w-64" : "w-16"
+        isSidebarOpen ? "w-64" : "w-16"
       )}>
         {/* Toggle button */}
         <Button
@@ -55,28 +67,28 @@ export default function DashboardLayout({children}: {children: React.ReactNode})
           size="icon"
           className={cn(
             "self-end p-2 pt-4 text-white hover:bg-white/10 transition-colors duration-200",
-            isExpanded ? "ml-64" : "m-auto"
+            isSidebarOpen ? "ml-64" : "m-auto"
           )}
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => dispatch(setSidebarOpen(!isSidebarOpen))}
         >
           <MenuIcon className="h-4 w-4" />
         </Button>
 
         {/* Nav items */}
         <nav className="flex-1 space-y-2 p-2">
-          <NavItem icon={<HomeIcon className="h-4 w-4" />} label="Dashboard" expanded={isExpanded} />
-          <NavItem icon={<BarChartIcon className="h-4 w-4" />} label="Analytics" expanded={isExpanded} />
-          <NavItem icon={<LineChartIcon className="h-4 w-4" />} label="Reports" expanded={isExpanded} />
-          <NavItem icon={<PieChartIcon className="h-4 w-4" />} label="Statistics" expanded={isExpanded} />
-          <NavItem icon={<CalendarIcon className="h-4 w-4" />} label="Appointments" expanded={isExpanded} />
-          <NavItem icon={<SearchIcon className="h-4 w-4" />} label="Search" expanded={isExpanded} />
-          <NavItem icon={<UserIcon className="h-4 w-4" />} label="Profile" expanded={isExpanded} />
+          <NavItem icon={<HomeIcon className="h-4 w-4" />} label="Dashboard" expanded={isSidebarOpen} path="/dashboard" />
+          <NavItem icon={<SearchIcon className="h-4 w-4" />} label="Search Practice" expanded={isSidebarOpen} path="/practices" />
+          <NavItem icon={<LineChartIcon className="h-4 w-4" />} label="Reports" expanded={isSidebarOpen} path="/reports" />
+          <NavItem icon={<PieChartIcon className="h-4 w-4" />} label="Statistics" expanded={isSidebarOpen} path="/statistics" />
+          <NavItem icon={<CalendarIcon className="h-4 w-4" />} label="Appointments" expanded={isSidebarOpen} path="/appointments" />
+          <NavItem icon={<SearchIcon className="h-4 w-4" />} label="Search" expanded={isSidebarOpen} path="/search" />
+          <NavItem icon={<UserIcon className="h-4 w-4" />} label="Profile" expanded={isSidebarOpen} path="/profile" />
         </nav>
 
         {/* Auth buttons */}
         <div className="border-t border-blue-400/30 p-2 space-y-2 backdrop-blur-sm">
-          <NavItem icon={<LogInIcon className="h-4 w-4" />} label="Login" expanded={isExpanded} />
-          <NavItem icon={<LogOutIcon className="h-4 w-4" />} label="Logout" expanded={isExpanded} />
+          <NavItem icon={<LogInIcon className="h-4 w-4" />} label="Login" expanded={isSidebarOpen} path="/login" />
+          <NavItem icon={<LogOutIcon className="h-4 w-4" />} label="Logout" expanded={isSidebarOpen} path="/logout" />
         </div>
 
       </div>
@@ -84,7 +96,7 @@ export default function DashboardLayout({children}: {children: React.ReactNode})
       {/* Main content */}
       <div className={cn(
         "flex-1 p-8 transition-all duration-300 backdrop-blur-sm",
-        isExpanded ? "ml-72" : "ml-24"
+        isSidebarOpen ? "ml-72" : "ml-24"
       )}>
         {children}
       </div>
