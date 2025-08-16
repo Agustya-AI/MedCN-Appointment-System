@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SearchIcon, MapPinIcon, ClockIcon, StarIcon, PhoneIcon, MailIcon } from "lucide-react"
 import usePractice from '../practices/_hooks/usePractice'
+import { useRouter } from 'next/navigation'
 
 interface Doctor {
   id: number;
@@ -88,7 +89,8 @@ const mockDoctors: Doctor[] = [
 export default function PracticePage() {
 
   const { practices, loading, error, fetchAllPractices } = usePractice();
-
+  const router = useRouter();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
@@ -108,6 +110,10 @@ export default function PracticePage() {
     // const matchesSpecialty = !selectedSpecialty || practice.specialty === selectedSpecialty;
     return matchesSearch;
   });
+
+  const gotoPracticeDetail = (practice_id: number) => {
+    router.push(`/practices/${practice_id}`);
+  }
 
   const topDoctors = mockDoctors.filter(doctor => doctor.isTopRated);
 
@@ -216,7 +222,9 @@ export default function PracticePage() {
                           </div>
                         </div>
                         
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Button onClick={() => {
+                          gotoPracticeDetail(doctor.id);
+                        }} className="bg-blue-600 hover:bg-blue-700">
                           Goto Practice
                         </Button>
                       </div>
