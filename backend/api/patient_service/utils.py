@@ -76,6 +76,19 @@ def login_patient(fields):
         raise Exception("Login failed: " + str(e))
 
 
+
+def get_patient_details(patient_token: str):
+    """Get patient details."""
+    try:
+        patient = PatientUser.objects.filter(token=patient_token, is_active=True, is_deleted=False).first()
+        if not patient:
+            raise Exception("Invalid patient token")
+        return patient
+    except Exception as e:
+        raise Exception(str(e))
+
+
+
 def get_family_members(patient_token: str):
     """Retrieve all family members associated with a patient via the patient's auth token."""
     try:
@@ -181,7 +194,7 @@ def get_all_practices():
     """Get all practices for a patient."""
     try:
       
-        practices = PracticeRegistry.objects.all().values('id', 'practice_name')
+        practices = PracticeRegistry.objects.all()
         return list(practices)
     except Exception as e:
         raise Exception(str(e))
@@ -271,6 +284,7 @@ def get_practioner_availability(practioner_id: int, date: str):
         return available_slots
     except Exception as e:
         raise Exception(str(e))
+    
 def book_appointment_with_practioner(patient_token: str, practioner_id: int, appointment_data: dict):
     """Book an appointment with a practitioner."""
     try:

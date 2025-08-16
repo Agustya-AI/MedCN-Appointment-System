@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +19,8 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { setSidebarOpen } from '@/store/app';
+import { setCurrentUserDetails } from '@/store/user';
+import axiosInstance from '@/utils/apiUtils';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -47,12 +49,33 @@ function NavItem({ icon, label, expanded, path }: NavItemProps) {
   )
 }
 
-export default function DashboardLayout({children}: {children: React.ReactNode}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 
   const isSidebarOpen = useSelector((state: RootState) => state.appService.isSidebarOpen);
 
   const dispatch = useDispatch();
+
+  const userDetails = useSelector((state: RootState) => state.userService.userDetails);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const userToken = localStorage.getItem('user_token');
+      console.log(userToken)
+      if (userToken && (!userDetails || Object.keys(userDetails).length === 0)) {
+        const response = await axiosInstance.get('/patient/current-patient-details', {
+          params: {
+            patient_token: userToken
+          }
+        })
+        if (response.status === 200) {
+          dispatch(setCurrentUserDetails(response.data));
+        }
+      }
+    }
+    fetchUserDetails();
+  }, [userDetails, dispatch]);
+
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

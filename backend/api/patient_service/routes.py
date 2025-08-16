@@ -12,7 +12,8 @@ from .utils import (
     get_practice_details,
     get_practice_practitioners,
     get_practioner_availability,
-    book_appointment_with_practioner
+    book_appointment_with_practioner,
+    get_patient_details
 )
 from starlette.concurrency import run_in_threadpool
 
@@ -44,6 +45,15 @@ async def login(details: dict):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
+
+@router.get("/current-patient-details")
+async def get_current_patient_details(patient_token: str = Query(..., description="Patient authentication token")):
+    """Get current patient details."""
+    try:
+        result = await run_in_threadpool(get_patient_details, patient_token)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 # ------------------------------
 # Family Member Endpoints

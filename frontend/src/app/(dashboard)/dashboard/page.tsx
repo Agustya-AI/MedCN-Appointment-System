@@ -1,7 +1,9 @@
+"use client";
+
+import { Input } from '@/components/ui/input'
 import DashboardLayout from '@/layout/DashboardLayout'
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -16,13 +18,12 @@ import {
   Plus,
   Filter
 } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/store'
 
 export default function Dashboard() {
   // Mock data - in real app this would come from API
-  const user = {
-    name: "Ashish Kumar Verma",
-    avatar: "AK"
-  }
+  const userDetails = useSelector((state: RootState) => state.userService.userDetails);
 
   const appointments = [
     {
@@ -101,7 +102,7 @@ export default function Dashboard() {
           {/* Greeting Section */}
           <div className="mb-8">
             <h1 className="text-4xl font-light text-slate-800 mb-2">
-              {getGreeting()}, <span className="font-medium text-blue-700">{user.name.split(' ')[0]}</span>
+              {getGreeting()}, <span className="font-medium text-blue-700">{userDetails?.first_name}</span>
             </h1>
             <p className="text-lg text-slate-600 font-light">
               Welcome back to your health dashboard
@@ -197,10 +198,10 @@ export default function Dashboard() {
               <Card className="border-0 shadow-sm bg-white border-t-4 border-t-blue-500">
                 <CardContent className="p-6 text-center">
                   <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-2xl font-medium text-blue-700 mx-auto mb-4">
-                    {user.avatar}
+                      {userDetails?.first_name?.charAt(0).toUpperCase()}
                   </div>
-                  <h3 className="text-lg font-medium text-slate-800 mb-1">{user.name}</h3>
-                  <p className="text-sm text-blue-600">Patient ID: #12345</p>
+                  <h3 className="text-lg font-medium text-slate-800 mb-1">{userDetails?.first_name}</h3>
+                  <p className="text-sm text-blue-600">Patient ID: #{userDetails?.patient_uuid}</p>
                 </CardContent>
               </Card>
 

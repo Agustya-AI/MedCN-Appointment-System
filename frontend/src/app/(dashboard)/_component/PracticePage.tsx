@@ -2,13 +2,14 @@
 "use client";
 
 import DashboardLayout from '@/layout/DashboardLayout'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SearchIcon, MapPinIcon, ClockIcon, StarIcon, PhoneIcon, MailIcon } from "lucide-react"
+import usePractice from '../practices/_hooks/usePractice'
 
 interface Doctor {
   id: number;
@@ -85,17 +86,27 @@ const mockDoctors: Doctor[] = [
 ];
 
 export default function PracticePage() {
+
+  const { practices, loading, error, fetchAllPractices } = usePractice();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGender, setSelectedGender] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedHours, setSelectedHours] = useState("");
 
-  const filteredDoctors = mockDoctors.filter(doctor => {
-    const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGender = !selectedGender || doctor.gender === selectedGender;
-    const matchesSpecialty = !selectedSpecialty || doctor.specialty === selectedSpecialty;
-    return matchesSearch && matchesGender && matchesSpecialty;
+  useEffect(() => {
+    fetchAllPractices();
+  }, []);
+
+  const filteredDoctors = practices?.filter(practice => {
+    const matchesSearch = practice.practice_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         practice.practice_associated_with.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         practice.about_practice.toLowerCase().includes(searchTerm.toLowerCase());
+    // Note: The practice data structure doesn't include gender or specialty fields
+    // These filters are commented out until the data structure is updated
+    // const matchesGender = !selectedGender || practice.gender === selectedGender;
+    // const matchesSpecialty = !selectedSpecialty || practice.specialty === selectedSpecialty;
+    return matchesSearch;
   });
 
   const topDoctors = mockDoctors.filter(doctor => doctor.isTopRated);
@@ -185,14 +196,14 @@ export default function PracticePage() {
                   <div className="flex items-start space-x-4">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-blue-600 font-semibold text-lg">
-                        {doctor.name.split(' ').map(n => n[0]).join('')}
+                        {doctor.practice_name.split(' ').map((n: string) => n[0]).join('')}
                       </span>
                     </div>
                     
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{doctor.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">{doctor.practice_name}</h3>
                           <p className="text-blue-600 font-medium">{doctor.specialty}</p>
                           <div className="flex items-center space-x-2 mt-1">
                             <div className="flex items-center">
@@ -206,27 +217,21 @@ export default function PracticePage() {
                         </div>
                         
                         <Button className="bg-blue-600 hover:bg-blue-700">
-                          Book Appointment
+                          Goto Practice
                         </Button>
                       </div>
                       
                       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center space-x-2">
-                          <MapPinIcon className="h-4 w-4 text-blue-500" />
-                          <span>{doctor.location}</span>
-                        </div>
+                
                         <div className="flex items-center space-x-2">
                           <ClockIcon className="h-4 w-4 text-blue-500" />
                           <span>{doctor.openingHours}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <PhoneIcon className="h-4 w-4 text-blue-500" />
-                          <span>{doctor.phone}</span>
+                          <span>{doctor.phone_number}</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <MailIcon className="h-4 w-4 text-blue-500" />
-                          <span>{doctor.email}</span>
-                        </div>
+             
                       </div>
                     </div>
                   </div>
