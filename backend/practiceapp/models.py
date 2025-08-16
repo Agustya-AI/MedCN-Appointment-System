@@ -114,6 +114,9 @@ class AvailabilitySlot(models.Model):
         ordering = ['day_of_week', 'start_time']
         # Ensure no overlapping slots for the same practitioner on the same day
         unique_together = ['practitioner', 'day_of_week', 'start_time']
+        
+    def get_day_of_week_display(self):
+        return 
     
     def __str__(self):
         return f"{self.practitioner.display_name} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time}"

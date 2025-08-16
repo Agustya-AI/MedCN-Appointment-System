@@ -10,7 +10,9 @@ from .utils import (
     delete_family_member,
     get_all_practices,
     get_practice_details,
-    get_practice_practitioners
+    get_practice_practitioners,
+    get_practioner_availability,
+    book_appointment_with_practioner
 )
 from starlette.concurrency import run_in_threadpool
 
@@ -116,7 +118,7 @@ async def get_practice(practice_id: int):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     
 @router.get("/practice/{practice_id}/doctors")
-async def get_doctors(practice_id: int):
+async def get_practitioners(practice_id: int):
     """Get all doctors for a practice."""
     try:
         result = await run_in_threadpool(get_practice_practitioners, practice_id)
@@ -124,3 +126,20 @@ async def get_doctors(practice_id: int):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     
+@router.get("/practice/doctors/{practioner_id}/availability")
+async def get_practioner_availability_route(practioner_id: int, date: str):
+    """Get all doctors for a practice."""
+    try:
+        result = await run_in_threadpool(get_practioner_availability, practioner_id, date)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+@router.post("/practice/doctors/{practioner_id}/book-appointment")
+async def book_appointment_route(practioner_id: int, appointment_data: dict, patient_token: str = Query(..., description="Patient authentication token")):
+    """Book an appointment with a practitioner."""
+    try:
+        result = await run_in_threadpool(book_appointment_with_practioner, patient_token, practioner_id, appointment_data)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

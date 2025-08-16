@@ -1,8 +1,8 @@
 
 
 
-from platformuser.models import PatientUser, PatientFamilyMember
-from practiceapp.models import PracticeRegistry, PractionerRegistry
+from platformuser.models import PatientUser, PatientFamilyMember, PatientBooking
+from practiceapp.models import PracticeRegistry, PractionerRegistry, AvailabilitySlot
 import uuid
 
 
@@ -200,5 +200,115 @@ def get_practice_practitioners(practice_id: int):
     try:
         practitioners = PractionerRegistry.objects.filter(practioner_belong_to=practice_id)
         return list(practitioners)
+    except Exception as e:
+        raise Exception(str(e))
+    
+def get_practioner_availability(practioner_id: int, date: str):
+    """
+    Get all availability slots for a practioner on a specific date.
+    
+    Args:
+        practioner_id (int): The ID of the practitioner
+        date (str): Date in YYYY-MM-DD format (e.g., "2024-01-15")
+    
+    Returns:
+        list: Available slots for the specified date
+    """
+    try:
+        practioner = PractionerRegistry.objects.filter(id=practioner_id).first()
+        if not practioner:
+            raise Exception("Practitioner not found")
+        
+        # Parse the date
+        from datetime import datetime, timedelta
+        target_date = datetime.strptime(date, '%Y-%m-%d').date()
+        
+        # Calculate the start and end of the week for the target date
+        days_since_monday = target_date.weekday()
+        week_start = target_date - timedelta(days=days_since_monday)
+        week_end = week_start + timedelta(days=6)
+        
+        # Get all availability slots for the practitioner
+        availability_slots = AvailabilitySlot.objects.filter(
+            practitioner=practioner, 
+            is_active=True
+        ).values(
+            'availability_uuid',
+            'day_of_week', 
+            'start_time',
+            'end_time'
+        )
+        
+        # Check which slots are already booked on this specific date
+        booked_slots_on_date = PatientBooking.objects.filter(
+            practitioner=practioner,
+            booking_date=target_date,
+            is_active=True,
+            is_deleted=False
+        ).values_list('booking_slot', flat=True)
+        
+        print(booked_slots_on_date)
+        
+        # Check which availability UUIDs are booked for the entire week
+        booked_availability_uuids_in_week = PatientBooking.objects.filter(
+            practitioner=practioner,
+            booking_date__range=[week_start, week_end],
+            is_active=True,
+            is_deleted=False
+        ).values_list('booking_slot', flat=True)
+        
+        # Mark slots as available or booked
+        available_slots = []
+        for slot in availability_slots:
+            slot_info = dict(slot)
+            # Check if slot is booked on specific date OR if the availability UUID is used anywhere in the week
+            is_booked = (slot['availability_uuid'] in booked_slots_on_date or 
+                        slot['availability_uuid'] in booked_availability_uuids_in_week)
+            slot_info['is_available'] = not is_booked
+            slot_info['date'] = date
+            available_slots.append(slot_info)
+        
+        return available_slots
+    except Exception as e:
+        raise Exception(str(e))
+def book_appointment_with_practioner(patient_token: str, practioner_id: int, appointment_data: dict):
+    """Book an appointment with a practitioner."""
+    try:
+        # Validate patient token
+        patient = PatientUser.objects.filter(token=patient_token).first()
+        if not patient:
+            raise Exception("Invalid patient token")
+        
+        # Validate practitioner
+        practitioner = PractionerRegistry.objects.filter(id=practioner_id).first()
+        if not practitioner:
+            raise Exception("Practitioner not found")
+        
+        # Validate required fields in appointment_data
+        required_fields = ["appointment_type", "booking_date", "booking_slot"]
+        for field in required_fields:
+            if field not in appointment_data:
+                raise ValueError(f"Missing required field: {field}")
+        
+        # Create booking
+        booking = PatientBooking.objects.create(
+            patient=patient,
+            practitioner=practitioner,
+            appointment_id=appointment_data["appointment_type"],
+            booking_date=appointment_data["booking_date"],
+            booking_slot=appointment_data["booking_slot"],
+            booking_notes=appointment_data.get("booking_notes", "")
+        )
+        
+        return {
+            "booking_uuid": str(booking.patient_booking_uuid),
+            "patient": patient.first_name,
+            "practitioner": practitioner.display_name,
+            "booking_date": booking.booking_date,
+            "message": "Appointment booked successfully"
+        }
+        
+    except ValueError as e:
+        raise Exception(str(e))
     except Exception as e:
         raise Exception(str(e))

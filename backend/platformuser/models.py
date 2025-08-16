@@ -55,8 +55,7 @@ class PatientBooking(models.Model):
     practitioner = models.ForeignKey(PractionerRegistry, on_delete=models.CASCADE)
     appointment = models.ForeignKey(AppointmentType, on_delete=models.CASCADE)
     booking_date = models.DateField(null=True, blank=True)
-    booking_time = models.TimeField(null=True, blank=True)
-    booking_status = models.CharField(max_length=255, default="pending")
+    booking_slot = models.UUIDField(null=True, blank=True)
     booking_notes = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_deleted = models.BooleanField(default=False)
@@ -64,7 +63,7 @@ class PatientBooking(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.patient.first_name} → {self.practitioner.display_name} on {self.booking_date} at {self.booking_time}"
+        return f"{self.patient.first_name} → {self.practitioner.display_name} on {self.booking_date}"
 
 
 # class Booking(models.Model):
