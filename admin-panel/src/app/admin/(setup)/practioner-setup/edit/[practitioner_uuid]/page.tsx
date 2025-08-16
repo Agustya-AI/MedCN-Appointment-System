@@ -5,10 +5,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
-import axios from '@/constants/apiUtils';
+import axiosInstance from '@/constants/apiUtils';
 import { usePractitioners } from '@/app/admin/_hooks/usePracticeData';
 import PractitionerBasicInfoComponent from '../../_components/PractitionerBasicInfoComponent';
 import PractitionerProfessionalInfoComponent from '../../_components/PractitionerProfessionalInfoComponent';
+import PractitionerAvailabilityComponent from '../../_components/PractitionerAvailabilityComponent';
 
 // Type definitions for form data
 interface BasicInfoData {
@@ -26,6 +27,15 @@ interface ProfessionalInfoData {
   professional_areas_of_interest?: { [key: string]: boolean };
 }
 
+interface AvailabilitySlot {
+  availability_uuid?: string;
+  day_of_week: string;
+  day_name: string;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+}
+
 export default function EditPractitionerPage() {
   const router = useRouter();
   const params = useParams();
@@ -36,6 +46,7 @@ export default function EditPractitionerPage() {
   
   const [basicInfoData, setBasicInfoData] = useState<BasicInfoData>({});
   const [professionalInfoData, setProfessionalInfoData] = useState<ProfessionalInfoData>({});
+  const [availabilityData, setAvailabilityData] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -113,7 +124,7 @@ export default function EditPractitionerPage() {
 
       console.log('Updating practitioner with data:', mappedData);
 
-      const { data } = await axios.put(
+      const { data } = await axiosInstance.put(
         "/practice/edit-practitioner",
         mappedData,
         { 
@@ -199,6 +210,15 @@ export default function EditPractitionerPage() {
             <PractitionerProfessionalInfoComponent 
               initialData={professionalInfoData} 
               onChange={setProfessionalInfoData} 
+            />
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border">
+            <PractitionerAvailabilityComponent 
+              practitioner_uuid={practitioner_uuid}
+              initialAvailability={availabilityData}
+              onAvailabilityChange={setAvailabilityData}
+              isEditMode={true}
             />
           </div>
 

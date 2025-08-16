@@ -37,10 +37,16 @@ const slice = createSlice({
         setPracticeMembers: (state, action) => {
             state.practiceMembers = action.payload
         },
+        setPractionerAvailability: (state, action) => {
+            state.practionerAvailability = action.payload
+        },
+        setCurrentPractionerAvailability: (state, action) => {
+            state.currentPractionerAvailability = action.payload
+        },
     }
 })
 
 
-export const {setCurrentPracticeDetails, setAllPractionersAssociatedWithPractice, setPracticeAppointmentTypes, setPracticeMembers} = slice.actions
+export const {setCurrentPracticeDetails, setAllPractionersAssociatedWithPractice, setPracticeAppointmentTypes, setPracticeMembers, setPractionerAvailability, setCurrentPractionerAvailability} = slice.actions
 
 export default slice.reducer;

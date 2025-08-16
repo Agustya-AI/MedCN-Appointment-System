@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
 import { setAllPractionersAssociatedWithPractice } from '@/store/practice';
-import axios from '@/constants/apiUtils';
+import axiosInstance from '@/constants/apiUtils';
 import { usePractitioners } from '@/app/admin/_hooks/usePracticeData';
 import PractitionerBasicInfoComponent from '../_components/PractitionerBasicInfoComponent';
 import PractitionerProfessionalInfoComponent from '../_components/PractitionerProfessionalInfoComponent';
+import PractitionerAvailabilityComponent from '../_components/PractitionerAvailabilityComponent';
 
 // Type definitions for form data
 interface BasicInfoData {
@@ -27,6 +28,15 @@ interface ProfessionalInfoData {
   professional_areas_of_interest?: { [key: string]: boolean };
 }
 
+interface AvailabilitySlot {
+  availability_uuid?: string;
+  day_of_week: string;
+  day_name: string;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+}
+
 export default function NewPractitionerPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -35,6 +45,7 @@ export default function NewPractitionerPage() {
   
   const [basicInfoData, setBasicInfoData] = useState<BasicInfoData>({});
   const [professionalInfoData, setProfessionalInfoData] = useState<ProfessionalInfoData>({});
+  const [availabilityData, setAvailabilityData] = useState<AvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +89,7 @@ export default function NewPractitionerPage() {
 
       console.log('Uploading file for AI processing:', file.name);
 
-      const { data } = await axios.post('/ai/get-doctor-details-from-file', formData, {
+      const { data } = await axiosInstance.post('/ai/get-doctor-details-from-file', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -153,7 +164,7 @@ export default function NewPractitionerPage() {
 
       console.log('Creating practitioner with data:', mappedData);
 
-      const { data } = await axios.post(
+      const { data } = await axiosInstance.post(
         "/practice/add-practitioner",
         mappedData,
         { params: { user_token: token } }
@@ -163,6 +174,28 @@ export default function NewPractitionerPage() {
       
       // Refresh practitioners list
       refetchPractitioners();
+      
+      // If there are availability slots, create them after practitioner is created
+      if (availabilityData.length > 0) {
+        try {
+          const activeSlots = availabilityData.filter(slot => slot.is_active);
+          for (const slot of activeSlots) {
+            await axiosInstance.post(
+              `/practice/practitioners/${data.practitioner_uuid}/availability`,
+              {
+                day_of_week: slot.day_of_week,
+                start_time: slot.start_time,
+                end_time: slot.end_time
+              },
+              { params: { user_token: token } }
+            );
+          }
+          console.log('Availability slots created successfully');
+        } catch (availabilityErr: any) {
+          console.error('Error creating availability slots:', availabilityErr);
+          // Don't fail the entire operation, just log the error
+        }
+      }
       
       // Navigate back to practitioners list
       router.push('/admin/practioner-setup');
@@ -237,6 +270,14 @@ export default function NewPractitionerPage() {
             <PractitionerProfessionalInfoComponent 
               initialData={professionalInfoData} 
               onChange={setProfessionalInfoData} 
+            />
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border">
+            <PractitionerAvailabilityComponent 
+              initialAvailability={availabilityData}
+              onAvailabilityChange={setAvailabilityData}
+              isEditMode={false}
             />
           </div>
 
